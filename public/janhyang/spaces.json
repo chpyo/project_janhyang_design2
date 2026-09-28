@@ -1,0 +1,96 @@
+{
+  "spaces": [
+    {
+      "pin_id": "SS-01",
+      "name": "그늘 벤치",
+      "alias": "오후 세 시의 그늘",
+      "spatial_sound": {
+        "hook_audio_url": "",
+        "ambient_audio_url": "/janhyang/media/ss01-bed.mp3",
+        "voice_audio_url": "",
+        "music_bed": { "audio_url": "/janhyang/media/ss01-bed.mp3", "enter_at_sec": 12 },
+        "fog_visual_url": "",
+        "linger_audio_url": "",
+        "still_frame_url": ""
+      },
+      "feed": [
+        {
+          "id": "c1",
+          "type": "field_note",
+          "author": "잔향 에디터",
+          "text": "그늘이 먼저 왔고, 사람이 나중에 앉았다. 골목 틈새로 부자재 나르는 소리가 섞여 든다."
+        },
+        {
+          "id": "c2",
+          "type": "track_link",
+          "curator": "큐레이터 K",
+          "title": "Sewing Machine Rhythm",
+          "artist": "Local Instrumental",
+          "platform": "youtube",
+          "url": "https://www.youtube.com/results?search_query=sewing+machine+ambient+instrumental",
+          "note": "이 벤치에 앉았을 때 발밑에서 울리는 재봉틀 진동과 박자가 맞닿는 트랙."
+        },
+        {
+          "id": "c3",
+          "type": "field_note",
+          "author": "잔향 에디터",
+          "text": "밤에는 같은 자리, 다른 문장. 셔터가 내려도 그늘의 자리는 남는다."
+        }
+      ]
+    },
+    {
+      "pin_id": "SS-02",
+      "name": "공동작업장 옆 공터",
+      "alias": "정면이 아닌 옆",
+      "spatial_sound": {
+        "hook_audio_url": "",
+        "ambient_audio_url": "",
+        "voice_audio_url": "",
+        "music_bed": { "audio_url": "", "enter_at_sec": 12 },
+        "fog_visual_url": "",
+        "linger_audio_url": "",
+        "still_frame_url": ""
+      },
+      "feed": [
+        {
+          "id": "ss02-n",
+          "type": "field_note",
+          "author": "잔향 에디터",
+          "text": "조형물 정면은 이미 찍혔다. 옆 공터의 팬만 아직 이름이 없다."
+        },
+        {
+          "id": "ss02-t",
+          "type": "track_link",
+          "curator": "큐레이터 K",
+          "title": "Empty Lot Air",
+          "artist": "Field Tone",
+          "platform": "youtube",
+          "url": "https://www.youtube.com/results?search_query=empty+lot+ambient+instrumental",
+          "note": "바람보다 환풍이 먼저인 자리. 보컬 없는 낮은 지속음."
+        }
+      ]
+    },
+    {
+      "pin_id": "SS-03",
+      "name": "골목",
+      "alias": "이름 없는 쪽",
+      "spatial_sound": {
+        "hook_audio_url": "",
+        "ambient_audio_url": "",
+        "voice_audio_url": "",
+        "music_bed": { "audio_url": "", "enter_at_sec": 12 },
+        "fog_visual_url": "",
+        "linger_audio_url": "",
+        "still_frame_url": ""
+      },
+      "feed": [
+        {
+          "id": "ss03-n",
+          "type": "field_note",
+          "author": "잔향 에디터",
+          "text": "상호를 적지 않는다. 벽의 페인트가 먼저 말한다."
+        }
+      ]
+    }
+  ]
+}

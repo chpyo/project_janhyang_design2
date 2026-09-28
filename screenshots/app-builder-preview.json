@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "잔향",
+      "hasCanvas": true,
+      "bodyTextLen": 36,
+      "bodyTextHash": "7d7649ba6805781fcdcffd7176f34e55dbcee89f2f2073ea1ada64864eb613ec",
+      "bodyTextPrefix": "잔향 성수 여기서만 열려요 8초 0:00 0:08 지도 서랍 작업",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "잔향",
+      "hasCanvas": true,
+      "bodyTextLen": 36,
+      "bodyTextHash": "7d7649ba6805781fcdcffd7176f34e55dbcee89f2f2073ea1ada64864eb613ec",
+      "bodyTextPrefix": "잔향 성수 여기서만 열려요 8초 0:00 0:08 지도 서랍 작업",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
