@@ -3535,8 +3535,9 @@ function showWork(pane) {
   if (workPane === "studio") paintStudio();
 }
 function paintVaultCard(pin, keep, playing) {
+  const on = playing === pin.id;
   const card = document.createElement("article");
-  card.className = "keep";
+  card.className = on ? "keep playing" : "keep";
   const copy = document.createElement("div");
   const h = document.createElement("h2");
   h.textContent = workOf(pin).afterglow;
@@ -3551,7 +3552,6 @@ function paintVaultCard(pin, keep, playing) {
   const btn = document.createElement("button");
   btn.type = "button";
   btn.dataset.echo = pin.id;
-  const on = playing === pin.id;
   btn.textContent = on ? "정지" : "30초";
   btn.setAttribute("aria-pressed", on ? "true" : "false");
   card.append(copy, btn);
@@ -3612,6 +3612,9 @@ function approachWord(pin) {
   return dirs[i];
 }
 function render() {
+  const night = document.body.classList.contains("night");
+  const theme = document.querySelector('meta[name="theme-color"]');
+  if (theme) theme.setAttribute("content", night ? "#0B0F14" : "#F4F7FB");
   const pin = currentPin();
   const spec = actionSpec(pin);
   const band = bandOf(pin);
