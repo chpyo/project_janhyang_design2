@@ -1,0 +1,6 @@
+{
+  "pin": "SS-01",
+  "alg": "AES-GCM",
+  "key": "KuJdOLJpE/Z14I2ety8vKBor3TiHGPOzZoUqqYkWPAM=",
+  "note": "더미 키. 실서비스에서는 서버가 현장 검증 뒤에만 발급합니다."
+}

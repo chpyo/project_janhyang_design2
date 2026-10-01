@@ -4,6 +4,27 @@ import { JANHYANG_SHELL } from "@/janhyang-shell";
 
 export const Route = createFileRoute("/")({ component: Home });
 
+// 플랫폼 모듈은 객체 정의만 하고, engine.js가 마지막에 로드되며 init()을 돈다.
+const SCRIPTS = [
+  "context",
+  "sky",
+  "presence",
+  "access",
+  "content",
+  "safety",
+  "metrics",
+  "discover",
+  "play",
+  "stage",
+  "permit",
+  "feed",
+  "archive",
+  "clip",
+  "native",
+  "platform",
+  "selftest",
+].map((name) => `/janhyang/platform/${name}.js`).concat("/janhyang/engine.js");
+
 function Home() {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -14,10 +35,12 @@ function Home() {
     const w = window as Window & { __JH_SCRIPT__?: boolean };
     if (w.__JH_SCRIPT__) return;
     w.__JH_SCRIPT__ = true;
-    const s = document.createElement("script");
-    s.src = "/janhyang/engine.js";
-    s.async = false;
-    document.body.appendChild(s);
+    for (const src of SCRIPTS) {
+      const s = document.createElement("script");
+      s.src = src;
+      s.async = false;
+      document.body.appendChild(s);
+    }
   }, []);
 
   return (

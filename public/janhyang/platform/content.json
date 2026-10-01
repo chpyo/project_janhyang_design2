@@ -1,0 +1,1206 @@
+{
+  "version": "platform-dummy-0.2",
+  "note": "모든 항목은 더미 데이터입니다. 현장 검증 전.",
+  "regions": [
+    {
+      "id": "seongsu",
+      "name": "성수",
+      "channel": "local",
+      "bounds": {
+        "minLat": 37.541,
+        "maxLat": 37.5536,
+        "minLng": 127.0362,
+        "maxLng": 127.0608
+      },
+      "center": [
+        37.54458,
+        127.05602
+      ],
+      "first_pin": "SS-01"
+    },
+    {
+      "id": "gyeongbok",
+      "name": "경복궁",
+      "channel": "tour",
+      "bounds": {
+        "minLat": 37.5742,
+        "maxLat": 37.5848,
+        "minLng": 126.9712,
+        "maxLng": 126.9828
+      },
+      "center": [
+        37.579,
+        126.977
+      ],
+      "first_pin": "GB-01",
+      "sketch": {
+        "lines": [
+          [
+            [
+              37.5762,
+              126.9737
+            ],
+            [
+              37.5762,
+              126.98
+            ],
+            [
+              37.5838,
+              126.98
+            ],
+            [
+              37.5838,
+              126.9737
+            ],
+            [
+              37.5762,
+              126.9737
+            ]
+          ],
+          [
+            [
+              37.5757,
+              126.9769
+            ],
+            [
+              37.5742,
+              126.9769
+            ]
+          ],
+          [
+            [
+              37.5762,
+              126.9769
+            ],
+            [
+              37.5786,
+              126.977
+            ],
+            [
+              37.5812,
+              126.9771
+            ]
+          ]
+        ],
+        "areas": [
+          [
+            37.5797,
+            126.9752,
+            0.08,
+            0.06
+          ],
+          [
+            37.5825,
+            126.9772,
+            0.05,
+            0.05
+          ]
+        ],
+        "labels": [
+          [
+            "경복궁",
+            37.5834,
+            126.9741
+          ],
+          [
+            "세종대로",
+            37.5746,
+            126.9772
+          ]
+        ]
+      }
+    }
+  ],
+  "pins": [
+    {
+      "id": "GB-01",
+      "region": "gyeongbok",
+      "alias": "광화문 앞",
+      "lat": 37.576,
+      "lng": 126.9769,
+      "radius": 60,
+      "zone": "궁 입구",
+      "place_type": "광장",
+      "find_hint": "세종대로 끝, 궁의 정문 앞",
+      "safety": "횡단보도 신호 확인 / 수문장 교대식 동선 비우기",
+      "aggro": "문 앞에 서야 문이 말을 한다.",
+      "afterglow": "정문은 몇 번 자리를 옮겼고, 지금 다시 제자리에 있다.",
+      "duration_sec": 70,
+      "day": [
+        {
+          "start": 4,
+          "end": 24,
+          "text": "광화문은 경복궁의 정문이다. 지금 보고 있는 문루는 2010년에 원래 자리로 다시 세운 것이다."
+        },
+        {
+          "start": 26,
+          "end": 50,
+          "text": "일제강점기에는 문이 궁의 동쪽으로 옮겨졌고, 한국전쟁 때 문루가 불탔다."
+        },
+        {
+          "start": 52,
+          "end": 70,
+          "text": "그래서 이 문 앞의 공기는 생각보다 젊다. 돌은 오래됐고, 자리는 최근에 돌아왔다."
+        }
+      ],
+      "night": [
+        {
+          "start": 4,
+          "end": 30,
+          "text": "밤의 광화문은 조명이 문루의 지붕선을 따라 그린다."
+        },
+        {
+          "start": 32,
+          "end": 60,
+          "text": "낮의 인파가 빠지면 세종대로의 차 소리가 문을 대신해 말한다."
+        }
+      ]
+    },
+    {
+      "id": "GB-02",
+      "region": "gyeongbok",
+      "alias": "근정전 앞마당",
+      "lat": 37.5786,
+      "lng": 126.977,
+      "radius": 50,
+      "zone": "정전",
+      "place_type": "마당",
+      "find_hint": "흥례문과 근정문을 지나 가장 큰 전각 앞",
+      "safety": "관람 시간 내 / 박석 위 미끄럼 주의",
+      "aggro": "큰 마당은 사람보다 먼저 줄을 세운다.",
+      "afterglow": "품계석 사이에 서 있던 시간.",
+      "duration_sec": 80,
+      "day": [
+        {
+          "start": 4,
+          "end": 28,
+          "text": "근정전은 경복궁의 정전이다. 즉위식이나 신하들이 모이는 조회 같은 큰 의식이 이 앞마당에서 열렸다."
+        },
+        {
+          "start": 30,
+          "end": 56,
+          "text": "마당 양쪽으로 줄지은 작은 비석이 품계석이다. 관리들은 자기 품계가 새겨진 돌 옆에 섰다."
+        },
+        {
+          "start": 58,
+          "end": 80,
+          "text": "울퉁불퉁한 박석은 일부러 고르지 않게 깔았다는 이야기가 있다. 발밑을 느껴 보자."
+        }
+      ],
+      "night": [
+        {
+          "start": 4,
+          "end": 40,
+          "text": "야간 개장 날이면 근정전의 처마가 어둠 속에서 떠오른다."
+        }
+      ]
+    },
+    {
+      "id": "GB-03",
+      "region": "gyeongbok",
+      "alias": "경회루 연못가",
+      "lat": 37.5797,
+      "lng": 126.9757,
+      "radius": 50,
+      "zone": "연회",
+      "place_type": "연못",
+      "find_hint": "근정전 서쪽, 물 위에 선 누각",
+      "safety": "연못 난간 기대지 않기",
+      "aggro": "물 위의 기둥은 바람을 세어 본다.",
+      "afterglow": "누각은 물에 한 번, 하늘에 한 번 비친다.",
+      "duration_sec": 70,
+      "day": [
+        {
+          "start": 4,
+          "end": 30,
+          "text": "경회루는 나라에 경사가 있을 때 연회를 열던 누각이다."
+        },
+        {
+          "start": 32,
+          "end": 58,
+          "text": "연못 위에 돌기둥을 세우고 그 위에 누각을 올렸다. 물 위에 비친 기둥을 세어 보자."
+        }
+      ],
+      "night": [
+        {
+          "start": 4,
+          "end": 40,
+          "text": "밤에는 연못이 조명을 받아 누각을 두 채로 만든다."
+        }
+      ]
+    },
+    {
+      "id": "GB-04",
+      "region": "gyeongbok",
+      "alias": "향원정",
+      "lat": 37.5825,
+      "lng": 126.9772,
+      "radius": 45,
+      "zone": "후원",
+      "place_type": "정자",
+      "find_hint": "궁의 북쪽, 연못 가운데 작은 섬",
+      "safety": "다리 위 정체 금지",
+      "aggro": "섬 하나, 정자 하나, 다리 하나.",
+      "afterglow": "육각 지붕 아래로 바람이 여섯 번 꺾인다.",
+      "duration_sec": 60,
+      "day": [
+        {
+          "start": 4,
+          "end": 30,
+          "text": "향원정은 연못 가운데 섬에 세운 육각형 정자다. 다리를 건너 섬으로 이어진다."
+        },
+        {
+          "start": 32,
+          "end": 60,
+          "text": "궁의 깊은 곳까지 오면 도시 소리가 거의 들리지 않는다. 그 조용함까지가 이 자리다."
+        }
+      ],
+      "night": [
+        {
+          "start": 4,
+          "end": 30,
+          "text": "밤의 향원정은 물 위에 떠 있는 등불 같다."
+        }
+      ]
+    },
+    {
+      "id": "DR-01",
+      "region": "seongsu",
+      "alias": "셔터 아래 라이브",
+      "lat": 37.5452,
+      "lng": 127.0528,
+      "radius": 45,
+      "zone": "드롭",
+      "place_type": "셔터 앞",
+      "find_hint": "연무장 북쪽, 오후에만 셔터가 반쯤 열리는 창고 앞",
+      "safety": "통행로 막지 않기 / 스피커 금지, 이어폰만",
+      "aggro": "오늘만 열리는 자리. 셔터가 내려가기 전에.",
+      "afterglow": "셔터는 내려갔고, 박자는 남았다.",
+      "duration_sec": 60,
+      "drop": {
+        "title": "오늘의 드롭",
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "from": "11:00",
+        "to": "22:00"
+      },
+      "day": [
+        {
+          "start": 4,
+          "end": 30,
+          "text": "이 자리는 매일 오전 열한 시에 열리고 밤 열 시에 닫힌다. 로컬 밴드가 이 셔터 앞에서만 들려주는 합주."
+        },
+        {
+          "start": 32,
+          "end": 60,
+          "text": "녹음은 여기서만 재생된다. 사진 대신 박자를 가져가자."
+        }
+      ],
+      "night": [
+        {
+          "start": 4,
+          "end": 40,
+          "text": "닫히기 전 마지막 한 시간. 셔터 틈으로 새는 불빛."
+        }
+      ]
+    },
+    {
+      "id": "DR-02",
+      "region": "seongsu",
+      "alias": "주말 밤 옥상 계단",
+      "lat": 37.547,
+      "lng": 127.056,
+      "radius": 40,
+      "zone": "드롭",
+      "place_type": "계단",
+      "find_hint": "육교에서 북쪽으로 두 블록, 바깥 계단이 있는 붉은 건물",
+      "safety": "계단 난간 / 22시 이후 소음 금지",
+      "aggro": "주말 밤에만 열리는 계단.",
+      "afterglow": "계단 한 칸마다 한 마디씩.",
+      "duration_sec": 60,
+      "drop": {
+        "title": "주말 드롭",
+        "days": [
+          5,
+          6
+        ],
+        "from": "18:00",
+        "to": "22:00"
+      },
+      "day": [
+        {
+          "start": 4,
+          "end": 40,
+          "text": "금요일과 토요일 저녁에만 열리는 자리. 계단을 오르며 듣는 4분짜리 사운드 워크."
+        }
+      ],
+      "night": [
+        {
+          "start": 4,
+          "end": 40,
+          "text": "주말 밤, 계단 위에서 도시 소리가 한 층 낮아진다."
+        }
+      ]
+    }
+  ],
+  "policies": {
+    "default": {
+      "capacity": 20
+    },
+    "SS-06": {
+      "capacity": 10,
+      "checkin_code": "POPUP-0601",
+      "note": "팝업 내부는 GPS가 약해 QR 체크인을 함께 씁니다."
+    },
+    "SS-11": {
+      "capacity": 6,
+      "residential": true,
+      "quiet": "21:00-09:00"
+    },
+    "SS-13": {
+      "capacity": 6,
+      "residential": true,
+      "quiet": "21:00-09:00"
+    },
+    "SS-14": {
+      "night_closed": true,
+      "reason": "공원 폐장 후 닫힘"
+    },
+    "SS-17": {
+      "night_closed": true,
+      "reason": "밤에는 으슥해서 닫힘"
+    },
+    "SS-18": {
+      "night_closed": true,
+      "reason": "밤 안전 미확인"
+    },
+    "SS-19": {
+      "traffic": true
+    },
+    "DR-01": {
+      "capacity": 15
+    },
+    "GB-01": {
+      "capacity": 60,
+      "traffic": true
+    },
+    "GB-02": {
+      "capacity": 80,
+      "hours": "09:00-18:00"
+    }
+  },
+  "occupancy": {
+    "SS-01": 3,
+    "SS-02": 5,
+    "SS-03": 2,
+    "SS-05": 8,
+    "SS-06": 9,
+    "SS-09": 4,
+    "SS-11": 2,
+    "SS-13": 1,
+    "DR-01": 7,
+    "GB-01": 34,
+    "GB-02": 41,
+    "GB-03": 22,
+    "GB-04": 12
+  },
+  "courses": [
+    {
+      "id": "CO-SEW",
+      "region": "seongsu",
+      "title": "재봉선 코스",
+      "dek": "그늘 벤치에서 시작해 골목 모서리, 벽돌 틈까지. 순서대로 걸으면 마지막 자리에서 이야기가 완성된다.",
+      "pins": [
+        "SS-01",
+        "SS-03",
+        "SS-09"
+      ],
+      "reward_item": "it-co-sew-final"
+    },
+    {
+      "id": "CO-GB",
+      "region": "gyeongbok",
+      "title": "궁궐 산책 퀘스트",
+      "dek": "정문에서 정전, 연회의 누각, 북쪽 정자까지. 네 자리를 모두 들으면 마지막 정자에서 보너스 해설이 열린다.",
+      "pins": [
+        "GB-01",
+        "GB-02",
+        "GB-03",
+        "GB-04"
+      ],
+      "reward_item": "it-gb-final"
+    }
+  ],
+  "items": [
+    {
+      "id": "it-ss01-rain",
+      "pin": "SS-01",
+      "type": "soundscape",
+      "tier": "curated",
+      "title": "비 오는 날의 그늘",
+      "creator": "잔향 에디터",
+      "teaser": "빗방울이 차양을 두드리는 박자.",
+      "lock": {
+        "layer": "condition",
+        "when": {
+          "weather": [
+            "rain"
+          ]
+        }
+      },
+      "body": {
+        "duration_sec": 60,
+        "filter": [
+          "lowpass",
+          900,
+          0.6
+        ],
+        "rain": true,
+        "bearing": 270,
+        "text": "같은 벤치, 비 오는 날에만 열리는 버전. 재봉기 대신 차양 위 빗소리가 박자를 맡는다."
+      }
+    },
+    {
+      "id": "it-ss01-dwell",
+      "pin": "SS-01",
+      "type": "music",
+      "tier": "creator",
+      "title": "그늘 3분",
+      "creator": "모래시계 (가상의 로컬 뮤지션)",
+      "teaser": "이 벤치에서만 발매된 싱글.",
+      "lock": {
+        "layer": "dwell",
+        "dwell_sec": 180
+      },
+      "body": {
+        "artist": "모래시계",
+        "exclusive": true,
+        "audio_url": "/janhyang/media/ss01-bed.mp3",
+        "note": "벤치에 3분 머문 사람에게만 열리는 장소 한정 싱글. 다른 곳에서는 재생되지 않는다."
+      }
+    },
+    {
+      "id": "it-ss01-revisit",
+      "pin": "SS-01",
+      "type": "docent",
+      "tier": "curated",
+      "title": "두 번째 그늘",
+      "creator": "잔향 에디터",
+      "teaser": "다시 온 사람에게만 하는 이야기.",
+      "lock": {
+        "layer": "revisit",
+        "visits": 2
+      },
+      "body": {
+        "lines": {
+          "ko": [
+            {
+              "t": 0,
+              "text": "다시 왔다. 그늘은 지난번보다 한 뼘 옮겨 있을 것이다.",
+              "look": 200
+            },
+            {
+              "t": 8,
+              "text": "왼쪽 창문을 보자. 바늘이 내려오는 속도는 계절마다 다르다.",
+              "look": 250
+            },
+            {
+              "t": 16,
+              "text": "처음 왔을 때 들리지 않던 소리가 하나쯤 있을 것이다. 그게 두 번째 그늘이다.",
+              "look": 200
+            }
+          ],
+          "en": [
+            {
+              "t": 0,
+              "text": "You came back. The shade has moved a hand's width since last time.",
+              "look": 200
+            },
+            {
+              "t": 8,
+              "text": "Look at the window on your left. The needle moves at a different pace each season.",
+              "look": 250
+            },
+            {
+              "t": 16,
+              "text": "There is probably one sound you did not hear the first time. That is the second shade.",
+              "look": 200
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "it-ss01-rest",
+      "pin": "SS-01",
+      "type": "music",
+      "tier": "curated",
+      "title": "10분 쉼",
+      "creator": "큐레이터 K",
+      "teaser": "점심시간, 잠깐 앉았을 때.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "rest": true,
+      "body": {
+        "artist": "플레이리스트",
+        "note": "앉아서 머물면 먼저 제안되는 쉼 세트. 보컬 없는 곡만.",
+        "tracks": [
+          {
+            "title": "Lunch Break Ambient",
+            "query": "lunch break ambient instrumental"
+          },
+          {
+            "title": "Soft Rain Piano",
+            "query": "soft rain piano instrumental"
+          },
+          {
+            "title": "Lo-fi Bench",
+            "query": "lofi beats no vocals"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-ss01-capsule",
+      "pin": "SS-01",
+      "type": "capsule",
+      "tier": "curated",
+      "title": "작년 가을의 메모",
+      "creator": "잔향 에디터",
+      "teaser": "날짜가 지나야 열리는 쪽지.",
+      "lock": {
+        "layer": "capsule",
+        "unlock_at": "2026-09-01"
+      },
+      "body": {
+        "text": "작년 가을, 이 벤치 옆 공방은 아직 재봉기를 세 대 돌렸다. 올해는 몇 대일까. 세어 보고 가자.",
+        "from": "잔향 에디터 · 2025.09"
+      }
+    },
+    {
+      "id": "it-ss01-sealed",
+      "pin": "SS-01",
+      "type": "docent",
+      "tier": "creator",
+      "title": "재봉사의 목소리",
+      "creator": "골목 인터뷰 프로젝트 (가상)",
+      "teaser": "암호화된 채로 기기에 받아 두고, 현장에서 풀리는 인터뷰.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "sealed": {
+        "alg": "AES-GCM",
+        "iv": "WsjdlgbcJYVtRlA4",
+        "data": "H7mHjxTdmyAPhjhLYeWRU7kVKNV6IdJSgI8AZCnpLPq7Gw8vRZdWFP29EDeoDwayuUz6SAuEdM91YaqxOTg+lpO89uwFLy3fTcE4kCIU//PskcxgTJ1cbe6FUGdS8ausIJff/Ga5pmcYB0URuGERyzcTQGmxs6z5WlP950Hwa4soIci3j/7N+lxdCK80m0XLnSZFTgGO3CS5SqptM6QFhnNFSiOExuhLA4TIY5r7OzgS42EqBaF3fbSbvwI6GbFy1Tsv2RqQXXwEhE7W9fthaF5NWBzkQvyUuU7zWc11VijPCuAnDlsil7Y4Q3h7W90N+bAmCo64sHsar5KiVu1r9wG5Ga2LcT7O/2c+RQ7/XKV72IGJ5YmceFUeZcQz+qwv82LLycifpoYcTWT403IMSAA9L1SxgIGeTfBgF7mvfft1FZqUDQvIvhnudaM9jFD9sZP2+yh/hQwQ3LJPvu76xYEKNL0bqLgTyWBC88iS7HlVxWjHYJSm5Gm0zLhCokLvARlnikPRTYWurKsJ2BaeVLG6RMfgV5UDMU+MIkXX+0QLCj2YjH0TQ4ME4Nhb8m2wjc5R9cyUelaHvBwaqH7gJOLCfUld391E4ePVyvHguBRhlueu+tOfsZxQrkwfiqx7kUN5H6vhR1r/iHhb5euhXOSda1Cin9JFVJTmg/zb8Gg0RuGfdBqMuVOlZkj3Ll1rKbbYLeP0Sdv0iNQUOF69RZT+lhUv76iwgg4UCiCO9GWIJb+N+Vx0x5r4EF54X+PE54H9zkcgamFdsZP8KZZOI/ltEvbpwp5yUoGfJ0F0bBoz/WxcrmhrJVIkBCfa7OQqKE4xMd6jo0nwMT9nWnX69/5mRhxE6FLSVcGQuM9ZteCbmiRnwCr7xVlLFO6Sgj0khGvqlnRYjyHEv+XMf04fVD8SiB2eK8kGDrASKEkxQschId7gIzWd9bLsttv2eFeMNx7rsmugAkdDpkcyBeTWk+dmV05qZf8j3Rkfcw=="
+      }
+    },
+    {
+      "id": "it-ss02-hunt",
+      "pin": "SS-02",
+      "type": "game",
+      "tier": "curated",
+      "title": "환풍기 찾기",
+      "creator": "잔향 에디터",
+      "teaser": "공터 어딘가에서 낮게 우는 소리.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "game": "hunt",
+        "target": {
+          "north": -18,
+          "east": 22
+        },
+        "found_m": 7,
+        "freq": 110,
+        "reward": "찾았다. 이 팬은 공터에서 유일하게 하루 종일 쉬지 않는 소리다."
+      }
+    },
+    {
+      "id": "it-ss02-disco",
+      "pin": "SS-02",
+      "type": "game",
+      "tier": "curated",
+      "title": "공터 동시 청취",
+      "creator": "잔향 에디터",
+      "teaser": "같은 자리에 있는 사람들과 같은 박자.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "game": "disco",
+        "duration_sec": 240,
+        "bpm": 92,
+        "epoch": 1790000000
+      }
+    },
+    {
+      "id": "it-ss02-sponsor",
+      "pin": "SS-02",
+      "type": "music",
+      "tier": "creator",
+      "title": "작업장 옆 플레이리스트",
+      "creator": "가상 브랜드 A",
+      "sponsor": {
+        "name": "가상 브랜드 A",
+        "disclosed": true
+      },
+      "teaser": "스폰서가 고른 세 곡.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "artist": "플레이리스트",
+        "note": "스폰서 콘텐츠도 이 자리의 기준(보컬 없음, 상호 홍보 문구 없음)을 똑같이 따른다.",
+        "tracks": [
+          {
+            "title": "Workshop Hum",
+            "query": "workshop ambient instrumental"
+          },
+          {
+            "title": "Concrete Air",
+            "query": "concrete ambient drone"
+          }
+        ]
+      }
+    },
+    {
+      "id": "it-ss03-golden",
+      "pin": "SS-03",
+      "type": "soundscape",
+      "tier": "curated",
+      "title": "해 질 녘 벽",
+      "creator": "잔향 에디터",
+      "teaser": "해가 지기 직전 한 시간만.",
+      "lock": {
+        "layer": "condition",
+        "when": {
+          "golden": true
+        }
+      },
+      "body": {
+        "duration_sec": 50,
+        "filter": [
+          "bandpass",
+          600,
+          0.9
+        ],
+        "bearing": 260,
+        "text": "서쪽 벽이 주황색이 되는 시간에만 열리는 소리. 부자재 상자를 정리하는 마지막 소리들."
+      }
+    },
+    {
+      "id": "it-ss03-docent",
+      "pin": "SS-03",
+      "type": "docent",
+      "tier": "curated",
+      "title": "벽이 먼저 말한다",
+      "creator": "잔향 에디터",
+      "teaser": "모퉁이를 보며 듣는 1분.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "lines": {
+          "ko": [
+            {
+              "t": 0,
+              "text": "모퉁이에 서서 북쪽 벽을 보자. 페인트가 세 겹이다.",
+              "look": 0
+            },
+            {
+              "t": 9,
+              "text": "이제 동쪽. 부자재 상자들이 쌓이는 높이는 요일마다 다르다.",
+              "look": 90
+            },
+            {
+              "t": 18,
+              "text": "마지막으로 남쪽 골목 끝. 상호는 적지 않는다. 벽이 먼저 말한다.",
+              "look": 180
+            }
+          ],
+          "en": [
+            {
+              "t": 0,
+              "text": "Stand at the corner and face the north wall. Three layers of paint.",
+              "look": 0
+            },
+            {
+              "t": 9,
+              "text": "Now east. The stacks of supply boxes rise to a different height each weekday.",
+              "look": 90
+            },
+            {
+              "t": 18,
+              "text": "Finally, the south end of the alley. We do not name the shops. The wall speaks first.",
+              "look": 180
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "it-ss05-tag",
+      "pin": "SS-05",
+      "type": "game",
+      "tier": "curated",
+      "title": "그늘 술래잡기",
+      "creator": "잔향 에디터",
+      "teaser": "술래의 위치는 소리로만 안다.",
+      "lock": {
+        "layer": "condition",
+        "when": {
+          "min_group": 2
+        }
+      },
+      "body": {
+        "game": "tag",
+        "survive_sec": 90,
+        "start_m": 45,
+        "speed": 1.3,
+        "caught_m": 5
+      }
+    },
+    {
+      "id": "it-ss06-popup",
+      "pin": "SS-06",
+      "type": "docent",
+      "tier": "creator",
+      "title": "팝업 뒷문에서",
+      "creator": "가상 팝업 스튜디오",
+      "teaser": "실내에서는 QR 체크인으로 열린다.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "lines": {
+          "ko": [
+            {
+              "t": 0,
+              "text": "앞문의 줄이 아니라 뒷문으로 왔다. 이 골목은 팝업이 바뀔 때마다 벽 색이 바뀐다.",
+              "look": 45
+            },
+            {
+              "t": 10,
+              "text": "다음 팝업이 들어오기 전까지, 이 소리는 여기서만 남는다.",
+              "look": 45
+            }
+          ],
+          "en": [
+            {
+              "t": 0,
+              "text": "You came through the back, not the queue at the front. The wall changes color with every pop-up.",
+              "look": 45
+            },
+            {
+              "t": 10,
+              "text": "Until the next pop-up moves in, this sound stays only here.",
+              "look": 45
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "it-co-sew-final",
+      "pin": "SS-09",
+      "type": "docent",
+      "tier": "curated",
+      "title": "재봉선의 끝",
+      "creator": "잔향 에디터",
+      "teaser": "재봉선 코스를 순서대로 걸은 사람에게만.",
+      "lock": {
+        "layer": "course",
+        "course": "CO-SEW"
+      },
+      "body": {
+        "lines": {
+          "ko": [
+            {
+              "t": 0,
+              "text": "그늘 벤치, 골목 모서리, 그리고 벽돌 틈. 세 자리를 꿰면 한 줄의 재봉선이 된다.",
+              "look": 90
+            },
+            {
+              "t": 10,
+              "text": "이 골목이 하루에 만드는 구두는 몇 켤레일까. 답은 없고, 박자만 있다.",
+              "look": 90
+            }
+          ],
+          "en": [
+            {
+              "t": 0,
+              "text": "The shaded bench, the alley corner, and this gap between bricks. Stitch the three and you have a seam.",
+              "look": 90
+            },
+            {
+              "t": 10,
+              "text": "How many pairs of shoes does this alley make in a day? No answer, only rhythm.",
+              "look": 90
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "it-ss11-trace",
+      "pin": "SS-11",
+      "type": "note",
+      "tier": "curated",
+      "title": "주민 구역",
+      "creator": "잔향 에디터",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "text": "사람이 사는 골목이다. 벤치에서는 이어폰으로만, 목소리는 낮게."
+      }
+    },
+    {
+      "id": "it-ss14-video",
+      "pin": "SS-14",
+      "type": "video",
+      "tier": "curated",
+      "title": "숲 가장자리, 그때와 지금",
+      "creator": "잔향 아카이브 (더미)",
+      "teaser": "같은 자리의 예전 모습.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "src": "/janhyang/media/ss01-reel.mp4",
+        "then_label": "예전",
+        "now_label": "지금",
+        "bearing": 120,
+        "text": "카메라를 남동쪽으로 향하면 예전 영상이 지금 풍경 위로 겹친다. (더미 영상)"
+      }
+    },
+    {
+      "id": "it-gb01-docent",
+      "pin": "GB-01",
+      "type": "docent",
+      "tier": "curated",
+      "title": "정문의 이동",
+      "creator": "잔향 투어 (더미)",
+      "teaser": "문 앞에서 듣는 3분 해설.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "lines": {
+          "ko": [
+            {
+              "t": 0,
+              "text": "북쪽으로 문을 정면에서 바라보자. 경복궁의 정문, 광화문이다.",
+              "look": 0
+            },
+            {
+              "t": 10,
+              "text": "일제강점기에 이 문은 궁의 동쪽으로 옮겨졌다. 오른쪽 담장 너머 방향이다.",
+              "look": 80
+            },
+            {
+              "t": 20,
+              "text": "한국전쟁 때 문루가 불탔고, 2010년에야 원래 자리와 모습으로 돌아왔다.",
+              "look": 0
+            },
+            {
+              "t": 30,
+              "text": "뒤를 돌아 세종대로를 보자. 문은 원래 이 길을 정면으로 바라보도록 놓였다.",
+              "look": 180
+            }
+          ],
+          "en": [
+            {
+              "t": 0,
+              "text": "Face the gate to the north. This is Gwanghwamun, the main gate of Gyeongbokgung.",
+              "look": 0
+            },
+            {
+              "t": 10,
+              "text": "During the Japanese colonial period the gate was moved to the east side of the palace, beyond the wall on your right.",
+              "look": 80
+            },
+            {
+              "t": 20,
+              "text": "Its wooden tower burned during the Korean War. Only in 2010 did it return to its original place and form.",
+              "look": 0
+            },
+            {
+              "t": 30,
+              "text": "Turn around and look down Sejong-daero. The gate was set to face this road head-on.",
+              "look": 180
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "it-gb01-video",
+      "pin": "GB-01",
+      "type": "video",
+      "tier": "curated",
+      "title": "그때의 광화문",
+      "creator": "잔향 투어 (더미)",
+      "teaser": "같은 자리에서 겹쳐 보는 예전 모습.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "src": "/janhyang/media/ss01-reel.mp4",
+        "then_label": "그때",
+        "now_label": "지금",
+        "bearing": 0,
+        "text": "북쪽 문을 향하면 예전 영상이 지금 풍경과 겹친다. 실제 서비스에서는 기관과 협업한 사료 영상이 들어갈 자리. (더미 영상)"
+      }
+    },
+    {
+      "id": "it-gb02-docent",
+      "pin": "GB-02",
+      "type": "docent",
+      "tier": "curated",
+      "title": "품계석 사이",
+      "creator": "잔향 투어 (더미)",
+      "teaser": "마당에 선 관리들의 자리.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "lines": {
+          "ko": [
+            {
+              "t": 0,
+              "text": "근정전을 정면으로 보자. 왕의 즉위식 같은 큰 의식이 여기서 열렸다.",
+              "look": 0
+            },
+            {
+              "t": 10,
+              "text": "이제 왼쪽과 오른쪽의 작은 비석 줄. 품계석이다. 관리들은 자기 품계 옆에 섰다.",
+              "look": 270
+            },
+            {
+              "t": 20,
+              "text": "발밑의 박석을 느껴 보자. 매끈하지 않은 돌이 빛 반사를 줄여 준다는 설명도 있다.",
+              "look": 0
+            }
+          ],
+          "en": [
+            {
+              "t": 0,
+              "text": "Face Geunjeongjeon. Major ceremonies such as coronations were held here.",
+              "look": 0
+            },
+            {
+              "t": 10,
+              "text": "Now the rows of small stone markers on both sides. Officials stood by the marker of their rank.",
+              "look": 270
+            },
+            {
+              "t": 20,
+              "text": "Feel the uneven stones under your feet. One explanation is that the rough surface softens the glare.",
+              "look": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "it-gb03-scape",
+      "pin": "GB-03",
+      "type": "soundscape",
+      "tier": "curated",
+      "title": "연못의 바람",
+      "creator": "잔향 투어 (더미)",
+      "teaser": "누각 아래 물과 바람.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "duration_sec": 45,
+        "filter": [
+          "lowpass",
+          500,
+          0.5
+        ],
+        "bearing": 270,
+        "text": "연못 쪽에서 들려오는 낮은 바람과 물결. 소리는 서쪽 누각 방향에 고정된다."
+      }
+    },
+    {
+      "id": "it-gb03-game",
+      "pin": "GB-03",
+      "type": "game",
+      "tier": "curated",
+      "title": "궁궐 산책 퀘스트",
+      "creator": "잔향 투어 (더미)",
+      "teaser": "네 자리를 순서대로.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "game": "quest",
+        "course": "CO-GB"
+      }
+    },
+    {
+      "id": "it-gb-final",
+      "pin": "GB-04",
+      "type": "docent",
+      "tier": "curated",
+      "title": "궁의 가장 조용한 곳",
+      "creator": "잔향 투어 (더미)",
+      "teaser": "퀘스트를 마친 사람에게 열리는 보너스 해설.",
+      "lock": {
+        "layer": "course",
+        "course": "CO-GB"
+      },
+      "body": {
+        "lines": {
+          "ko": [
+            {
+              "t": 0,
+              "text": "정문에서 여기까지 걸어왔다. 궁은 안쪽으로 들어올수록 소리를 하나씩 내려놓는다.",
+              "look": 0
+            },
+            {
+              "t": 10,
+              "text": "향원정은 왕실의 휴식 공간 가까이에 있었다. 의식의 마당과 쉼의 연못 사이를 지금 지나온 것이다.",
+              "look": 0
+            }
+          ],
+          "en": [
+            {
+              "t": 0,
+              "text": "You walked here from the main gate. The deeper you go into the palace, the more sound it sets down.",
+              "look": 0
+            },
+            {
+              "t": 10,
+              "text": "Hyangwonjeong sat near the royal family's private quarters. You have just crossed from the court of ceremony to the pond of rest.",
+              "look": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "it-dr01-music",
+      "pin": "DR-01",
+      "type": "music",
+      "tier": "creator",
+      "title": "셔터 합주 (오늘만)",
+      "creator": "가상 로컬 밴드 '반층'",
+      "teaser": "오늘 22시까지만.",
+      "lock": {
+        "layer": "onsite"
+      },
+      "body": {
+        "artist": "반층",
+        "exclusive": true,
+        "audio_url": "/janhyang/media/ss01-bed.mp3",
+        "note": "드롭 시간 동안 이 셔터 앞에서만 재생되는 합주 녹음."
+      }
+    }
+  ],
+  "traces": {
+    "SS-01": [
+      {
+        "id": "tr-1",
+        "text": "점심 먹고 10분, 여기서 처음으로 아무 생각 안 했다.",
+        "at": "2026-09-18",
+        "tier": "ugc"
+      },
+      {
+        "id": "tr-2",
+        "text": "재봉기 박자에 맞춰 발을 까딱거리게 됨",
+        "at": "2026-09-24",
+        "tier": "ugc"
+      }
+    ],
+    "SS-02": [
+      {
+        "id": "tr-3",
+        "text": "환풍기 찾는 데 4분 걸림. 생각보다 낮은 데 있음",
+        "at": "2026-09-27",
+        "tier": "ugc"
+      }
+    ],
+    "GB-01": [
+      {
+        "id": "tr-4",
+        "text": "Came at sunset. The gate glows.",
+        "at": "2026-09-21",
+        "tier": "ugc"
+      }
+    ]
+  },
+  "metrics_sample": {
+    "label": "샘플 코호트 (더미, 2주)",
+    "pins": [
+      {
+        "pin": "SS-01",
+        "teaser": 412,
+        "visit": 133,
+        "dwell_avg": 412,
+        "revisit": 41,
+        "share": 38,
+        "share_visit": 11
+      },
+      {
+        "pin": "SS-02",
+        "teaser": 288,
+        "visit": 71,
+        "dwell_avg": 268,
+        "revisit": 12,
+        "share": 19,
+        "share_visit": 4
+      },
+      {
+        "pin": "SS-03",
+        "teaser": 251,
+        "visit": 64,
+        "dwell_avg": 190,
+        "revisit": 9,
+        "share": 8,
+        "share_visit": 2
+      },
+      {
+        "pin": "SS-06",
+        "teaser": 530,
+        "visit": 202,
+        "dwell_avg": 155,
+        "revisit": 18,
+        "share": 61,
+        "share_visit": 23
+      },
+      {
+        "pin": "DR-01",
+        "teaser": 690,
+        "visit": 248,
+        "dwell_avg": 236,
+        "revisit": 3,
+        "share": 97,
+        "share_visit": 41
+      },
+      {
+        "pin": "GB-01",
+        "teaser": 340,
+        "visit": 160,
+        "dwell_avg": 301,
+        "revisit": 6,
+        "share": 22,
+        "share_visit": 5
+      }
+    ],
+    "course_starts": 96,
+    "course_done": 31
+  }
+}

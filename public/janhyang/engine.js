@@ -1880,7 +1880,12 @@ const state = {
   tileRequestsAtBoot: 0,
   phaseHeld: false,
   rehearsalArmed: false,
-  wasInside: null
+  wasInside: null,
+  region: "seongsu",
+  channel: "local",
+  lang: "ko",
+  simEast: 0,
+  gpsAcc: 0
 };
 
 const audio = { ctx: null, master: null, nodes: [], aEnv: null, cGain: null, ring: null };
@@ -1915,7 +1920,7 @@ const AGGRO_SEC = 8;
 const AFTERGLOW_SEC = 30;
 
 function pinById(id) {
-  return DATA.pins.find((p) => p.id === id) || studioPins.find((p) => p.id === id) || DATA.pins[0];
+  return DATA.pins.find((p) => p.id === id) || Content.pins.find((p) => p.id === id) || studioPins.find((p) => p.id === id) || DATA.pins[0];
 }
 function currentPin() { return pinById(state.pinId); }
 function workOf(pin) { return pin.works[0]; }
@@ -1942,10 +1947,11 @@ function load() {
     const raw = localStorage.getItem("janhyang-pilot");
     if (!raw) return;
     const d = JSON.parse(raw);
-    if (Array.isArray(d.visited)) state.visited = d.visited.filter((id) => pinById(id).id === id);
+    // 플랫폼 핀(GB-, DR-)은 content.json이 늦게 오므로 여기서 거르지 않는다.
+    if (Array.isArray(d.visited)) state.visited = d.visited.filter((id) => typeof id === "string");
     if (d.resume && typeof d.resume === "object") state.resume = d.resume;
     if (Array.isArray(d.keeps)) {
-      state.keeps = d.keeps.filter((k) => k && state.visited.includes(k.pinId) && pinById(k.pinId).id === k.pinId);
+      state.keeps = d.keeps.filter((k) => k && state.visited.includes(k.pinId));
     }
   } catch (e) {}
   const known = {};
@@ -1969,7 +1975,10 @@ function haversine(a, b) {
 }
 function simPos(pin) {
   const p = pin || currentPin();
-  return offsetNorth(p.lat, p.lng, state.distanceM);
+  const east = state.simEast + Presence.jitter.e;
+  const north = offsetNorth(p.lat, p.lng, state.distanceM + Presence.jitter.n);
+  if (!east) return north;
+  return { lat: north.lat, lng: north.lng + east / (M_PER_DEG * Math.cos(p.lat * Math.PI / 180)) };
 }
 const LocationSource = {
   kind: "simulator",
@@ -1977,8 +1986,9 @@ const LocationSource = {
   onDistance(meters, atPin) {
     this.hits += 1;
     state.lastMeters = meters;
-    if (state.mode === "aggro" && meters <= atPin.radius) quietStop();
-    else if (state.mode === "main" && meters > atPin.radius) Player.fadeOut(4);
+    const here = Presence.inside(atPin, meters);
+    if (state.mode === "aggro" && here) quietStop();
+    else if (state.mode === "main" && !here) Player.fadeOut(4);
     render();
   },
   point() {
@@ -2009,6 +2019,8 @@ const LocationSource = {
         (pos) => {
           if (document.hidden || LocationSource.kind !== "gps") return;
           state.gpsFix = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          state.gpsAcc = Math.round(pos.coords.accuracy || 0);
+          Presence.observeFix({ lat: state.gpsFix.lat, lng: state.gpsFix.lng, t: pos.timestamp || Date.now() });
           state.gpsNote = "";
           state.rehearsalArmed = false;
           LocationSource.emit();
@@ -2060,7 +2072,7 @@ function distanceToPin(pin) {
   if (!here) return Infinity;
   return haversine(here, { lat: pin.lat, lng: pin.lng });
 }
-function inside(pin) { return distanceToPin(pin) <= pin.radius; }
+function inside(pin) { return Presence.inside(pin, distanceToPin(pin)); }
 function gate(pin) {
   if (inside(pin)) return "near";
   if (state.visited.includes(pin.id)) return "echo";
@@ -2278,7 +2290,10 @@ function updateAudio() {
     let mul = 0.26;
     if (state.mode === "aggro") mul = 0.18;
     if (state.mode === "echo") mul = 0.11;
+    const lv = Safety.duck() * Context.noiseGain();
+    mul *= lv;
     audio.aEnv.gain.value = level * mul;
+    if (Player.audioEl) Player.audioEl.volume = Math.min(1, 0.15 * lv);
     if (audio.ring) audio.ring.gain.value = level * 0.05;
     if (audio.cGain) {
       audio.cGain.gain.value = state.mode === "main" ? cAmp(pieceOf(pin), state.playT) : 0;
@@ -2566,7 +2581,7 @@ const Player = {
         return;
       }
       const pin = currentPin();
-      ms.metadata = new MediaMetadata({ title: pin.alias || pin.id, artist: "잔향" });
+      Native.metadata(pin, pin.alias || pin.id);
       ms.playbackState = playback === "paused" ? "paused" : "playing";
       ms.setActionHandler("play", () => Player.resumePlay());
       ms.setActionHandler("pause", () => Player.pause());
@@ -2611,8 +2626,17 @@ function markVisited() {
   delete state.resume[keyOf()];
   const pin = pinById(id);
   const rest = (state.keeps || []).filter((k) => k.pinId !== id);
-  state.keeps = [{ pinId: id, workId: workOf(pin).id, at: new Date().toISOString(), rehearsal: !!state.rehearsalArmed }].concat(rest).slice(0, 20);
+  const keep = {
+    pinId: id,
+    workId: workOf(pin).id,
+    at: new Date().toISOString(),
+    rehearsal: !!state.rehearsalArmed,
+    ctx: Context.snapshot(pin),
+    dwell: Math.round(Presence.dwellOf(id))
+  };
+  state.keeps = [keep].concat(rest).slice(0, 20);
   save();
+  Platform.onVisit(id);
 }
 function quietStop() { Player.stop(); }
 function beginFade() { Player.fadeOut(4); }
@@ -2628,6 +2652,7 @@ function userStop() {
 }
 function arm(mode) {
   clearLayoutHold();
+  Play.stop();
   const pin = currentPin();
   const from = state.playT;
   if (!Player.cue(mode, from)) return;
@@ -2646,15 +2671,17 @@ function playAggro() {
   quietStop();
   state.playT = 0;
   arm("aggro");
+  Metrics.log("teaser", pin.id);
 }
 function playMain() {
   const pin = currentPin();
-  if (!inside(pin)) return;
+  if (!inside(pin) || Safety.blockReason(pin)) return;
   if (!Player.accepts(workOf(pin))) { Player.cue("main"); return; }
   const resumeAt = state.resume[keyOf()] || 0;
   quietStop();
   Player.seek(resumeAt);
   arm("main");
+  Metrics.log("open", pin.id);
 }
 function playEcho(pinId) {
   if (!state.visited.includes(pinId)) return;
@@ -2663,6 +2690,8 @@ function playEcho(pinId) {
   if (state.mode !== "idle") quietStop();
   state.pinId = pinId;
   document.getElementById("pin").value = pinId;
+  const region = Content.regionOf(pinById(pinId));
+  if (Content.ready && region !== state.region) Discover.setRegion(region);
   state.playT = 0;
   arm("echo");
 }
@@ -2675,8 +2704,12 @@ function selectPin(id) {
   clearLayoutHold();
   if (state.mode === "main") state.resume[keyOf()] = state.playT;
   if (state.mode !== "idle") quietStop();
+  Play.stop();
+  Content.forgetUnsealed(state.pinId);
   state.pinId = id;
   document.getElementById("pin").value = id;
+  const region = Content.regionOf(pinById(id));
+  if (Content.ready && region !== state.region) Discover.setRegion(region);
   onPositionChanged();
 }
 function jump(kind) {
@@ -2688,6 +2721,9 @@ function jump(kind) {
   if (kind === "near") m = pin.radius * 0.4;
   if (kind === "leave") m = pin.radius + 12;
   state.distanceM = clamp(Math.round(m), 0, 400);
+  state.simEast = 0;
+  const east = document.getElementById("sim-east");
+  if (east) east.textContent = "동서 0m";
   const slider = document.getElementById("slider");
   slider.value = String(state.distanceM);
   onPositionChanged();
@@ -2768,10 +2804,10 @@ function paintStory(pin, spec) {
   let face = "재생";
   if (stopping) face = "정지";
   else if (echoAway) face = "서랍";
-  else if (spec.id === "aggro") face = "8초";
+  else if (spec.id === "aggro") face = "미리 듣기";
   action.textContent = face;
   action.dataset.kind = echoAway ? "drawer" : (stopping ? "stop" : spec.id);
-  action.setAttribute("aria-label", echoAway ? "서랍" : (stopping ? "정지" : actionFace(spec)));
+  action.setAttribute("aria-label", echoAway ? "서랍에서 잔향 듣기" : (stopping ? "정지" : spec.id === "aggro" ? "8초 미리 듣기" : actionFace(spec)));
   const title = document.getElementById("story-title");
   if (title) title.textContent = "";
   const span = storySpan(pin, spec);
@@ -2932,7 +2968,8 @@ function loadSpaceIndex() {
       spaceIndex = Promise.resolve(data);
       Object.keys(spaceById).forEach((id) => { delete spaceById[id]; });
       Object.keys(spacePending).forEach((id) => { delete spacePending[id]; });
-      if (document.getElementById("setlist")) paintSetlist();
+      Feed.stamp = "";
+      if (document.getElementById("pfeed")) paintSetlist();
     }).catch(() => {});
   }
   return spaceIndex;
@@ -2991,8 +3028,7 @@ function ensureSpace(pinId) {
   job.wired = true;
   job.then(() => {
     if (currentPin().id !== pinId) return;
-    const rest = document.getElementById("feed-rest");
-    if (rest) rest.dataset.sig = "";
+    Feed.stamp = "";
     paintSetlist();
   }).catch(() => {});
 }
@@ -3053,9 +3089,8 @@ function adoptCatalog(spaces) {
     studioPins.push(makeStudioPin(space, lat, lng));
   });
   syncStudioMarkers();
-  const rest = document.getElementById("feed-rest");
-  if (rest) rest.dataset.sig = "";
-  if (document.getElementById("setlist")) paintSetlist();
+  Feed.stamp = "";
+  if (document.getElementById("pfeed")) paintSetlist();
   if (activeTab === "work" && workPane === "studio") paintStudio();
 }
 function watchCatalog() {
@@ -3108,7 +3143,7 @@ function dropDraft(lat, lng) {
 function syncStudioMarkers() {
   if (!nmap.map || !window.naver) return;
   nmap.markers = nmap.markers.filter((item) => {
-    if (DATA.pins.some((p) => p.id === item.id) || studioPins.some((p) => p.id === item.id)) return true;
+    if (DATA.pins.some((p) => p.id === item.id) || Content.pins.some((p) => p.id === item.id) || studioPins.some((p) => p.id === item.id)) return true;
     item.marker.setMap(null);
     return false;
   });
@@ -3134,6 +3169,27 @@ function syncStudioMarkers() {
     });
     nmap.markers.push({ id: p.id, marker: marker });
   });
+}
+// content.json의 플랫폼 핀(관광·드롭)도 네이버 지도 마커로 올린다.
+function syncPlatformMarkers() {
+  if (!nmap.map || !window.naver) return;
+  Content.pins.forEach((p) => {
+    if (nmap.markers.some((item) => item.id === p.id)) return;
+    const marker = new naver.maps.Marker({
+      position: new naver.maps.LatLng(p.lat, p.lng),
+      map: nmap.map,
+      title: "",
+      icon: pinIcon(false),
+      zIndex: 10
+    });
+    naver.maps.Event.addListener(marker, "click", () => {
+      if (p.id !== state.pinId) selectPin(p.id);
+      state.sheetOpen = true;
+      render();
+    });
+    nmap.markers.push({ id: p.id, marker: marker });
+  });
+  nmap.stamp = "";
 }
 function saveStudioPin(e) {
   e.preventDefault();
@@ -3179,9 +3235,9 @@ function saveStudioPin(e) {
 }
 function feedLabel(item) {
   if (!item) return "항목";
-  if (item.type === "story") return item.title || "Story";
-  if (item.type === "track_link" || item.type === "music") return item.title || "Music";
-  return (item.text || "Note").slice(0, 28);
+  if (item.title) return item.title;
+  const text = (item.body && item.body.text) || item.text || "";
+  return text ? text.slice(0, 28) : (Feed.TYPE[item.type] || "항목");
 }
 function paintStudioFeed() {
   const list = document.getElementById("studio-feed");
@@ -3198,19 +3254,20 @@ function paintStudioFeed() {
     list.appendChild(empty);
     return;
   }
-  feed.forEach((item) => {
+  feed.forEach((raw) => {
+    const item = Content.normalize(raw, pinId) || raw;
     const row = document.createElement("div");
     row.className = "studio-row";
     const copy = document.createElement("div");
     const kind = document.createElement("span");
-    kind.textContent = item.type === "field_note" || item.type === "note" ? "Note" : item.type === "track_link" || item.type === "music" ? "Music" : "Story";
+    kind.textContent = (Feed.TYPE[item.type] || item.type) + " · " + Access.label(item) + (item.sponsor ? " · 스폰서" : "");
     const title = document.createElement("b");
     title.textContent = feedLabel(item);
     copy.append(kind, title);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = "삭제";
-    btn.addEventListener("click", () => removeFeedItem(pinId, item.id));
+    btn.addEventListener("click", () => removeFeedItem(pinId, raw.id));
     row.append(copy, btn);
     list.appendChild(row);
   });
@@ -3222,34 +3279,128 @@ function removeFeedItem(pinId, itemId) {
     return Object.assign({}, space, { feed: (space.feed || []).filter((item) => item.id !== itemId) });
   })).then(() => studioStatus("삭제됨")).catch((err) => studioStatus(err && err.message ? err.message : "삭제 실패"));
 }
+const STUDIO_TEMPLATES = {
+  walk: { type: "docent", lock: "onsite", note: "오디오 워크: 문장마다 시선 방향을 붙여 걸으며 듣는 해설" },
+  playlist: { type: "music", lock: "dwell", note: "장소 플레이리스트: 3분 머문 사람에게 열리는 곡 묶음" },
+  quest: { type: "game", lock: "onsite", note: "퀘스트: 반경 안에 숨은 소리를 찾아 걷는 게임" },
+  docent: { type: "docent", lock: "onsite", note: "도슨트: 한국어·영어 원고를 함께 올리면 언어 설정을 따라 읽어요" },
+  capsule: { type: "capsule", lock: "capsule", note: "타임캡슐: 지정한 날 이후 이 자리에서만 열려요" }
+};
+function studioInput(box, id, label, opts) {
+  const o = opts || {};
+  const wrap = document.createElement("label");
+  wrap.append(document.createTextNode(label + " "));
+  const input = document.createElement(o.area ? "textarea" : "input");
+  input.id = id;
+  if (!o.area) input.maxLength = o.max || 160;
+  if (o.type) input.type = o.type;
+  if (o.value != null) input.value = o.value;
+  input.placeholder = o.placeholder || "";
+  wrap.appendChild(input);
+  box.appendChild(wrap);
+  return input;
+}
+function studioSelect(box, id, label, options) {
+  const wrap = document.createElement("label");
+  wrap.append(document.createTextNode(label + " "));
+  const sel = document.createElement("select");
+  sel.id = id;
+  options.forEach((pair) => {
+    const o = document.createElement("option");
+    o.value = pair[0];
+    o.textContent = pair[1];
+    sel.appendChild(o);
+  });
+  wrap.appendChild(sel);
+  box.appendChild(wrap);
+  return sel;
+}
+function studioVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
 function paintStudioFields() {
   const type = document.getElementById("studio-type");
   const box = document.getElementById("studio-fields");
   if (!type || !box) return;
   const kind = type.value;
   box.replaceChildren();
-  const add = (id, label, placeholder) => {
-    const wrap = document.createElement("label");
-    wrap.append(document.createTextNode(label + " "));
-    const input = document.createElement("input");
-    input.id = id;
-    input.maxLength = 160;
-    input.placeholder = placeholder || "";
-    wrap.appendChild(input);
-    box.appendChild(wrap);
-  };
+  if (kind !== "note") studioInput(box, "studio-title", "제목", { placeholder: "제목" });
   if (kind === "story") {
-    add("studio-title", "제목", "제목");
-    add("studio-audio", "오디오 URL", "https://");
+    studioInput(box, "studio-audio", "오디오 URL", { placeholder: "https://" });
   } else if (kind === "music") {
-    add("studio-title", "곡명");
-    add("studio-artist", "아티스트");
-    add("studio-note", "코멘트");
-    add("studio-url", "YouTube URL", "https://");
+    studioInput(box, "studio-artist", "아티스트");
+    studioInput(box, "studio-note", "코멘트");
+    studioInput(box, "studio-url", "YouTube URL", { placeholder: "https://" });
+    studioInput(box, "studio-audio", "장소 한정 음원 URL (선택)", { placeholder: "https://" });
+  } else if (kind === "soundscape") {
+    studioInput(box, "studio-text", "설명");
+    studioInput(box, "studio-duration", "길이(초)", { type: "number", value: "45" });
+    studioInput(box, "studio-bearing", "소리 방향(°, 북=0)", { type: "number", value: "0" });
+  } else if (kind === "docent") {
+    studioInput(box, "studio-ko", "한국어 원고 (줄마다 한 문장)", { area: true });
+    studioInput(box, "studio-en", "영어 원고 (선택)", { area: true });
+    studioInput(box, "studio-bearing", "시선 방향(°, 북=0)", { type: "number", value: "0" });
+  } else if (kind === "video") {
+    studioInput(box, "studio-src", "영상 URL", { placeholder: "https://" });
+    studioInput(box, "studio-text", "설명");
+    studioInput(box, "studio-bearing", "맞춰 볼 방향(°)", { type: "number", value: "0" });
+  } else if (kind === "game") {
+    studioSelect(box, "studio-game", "게임", [["hunt", "소리 찾기"], ["disco", "동시 청취"], ["tag", "술래잡기"]]);
+    studioInput(box, "studio-north", "숨은 소리 · 북쪽(m)", { type: "number", value: "15" });
+    studioInput(box, "studio-east", "숨은 소리 · 동쪽(m)", { type: "number", value: "10" });
+  } else if (kind === "capsule") {
+    studioInput(box, "studio-text", "내용", { area: true });
   } else {
-    add("studio-text", "글귀");
-    add("studio-author", "작성자", "잔향 에디터");
+    studioInput(box, "studio-text", "글귀");
+    studioInput(box, "studio-author", "작성자", { placeholder: "잔향 에디터" });
   }
+  studioInput(box, "studio-teaser", "티저 (밖에서 보이는 한 줄)");
+  paintStudioLock();
+}
+function paintStudioLock() {
+  const lock = document.getElementById("studio-lock");
+  const box = document.getElementById("studio-lock-fields");
+  if (!lock || !box) return;
+  box.replaceChildren();
+  if (lock.value === "dwell") studioInput(box, "studio-dwell", "머물 시간(분)", { type: "number", value: "3" });
+  if (lock.value === "condition") {
+    studioSelect(box, "studio-when", "조건", [["rain", "비 오는 날"], ["snow", "눈 오는 날"], ["golden", "해 질 녘"], ["night", "밤"], ["group2", "2명 이상"]]);
+  }
+  if (lock.value === "revisit") studioInput(box, "studio-visits", "몇 번째 방문부터", { type: "number", value: "2" });
+  if (lock.value === "capsule") {
+    const d = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+    studioInput(box, "studio-unlock", "열리는 날", { type: "date", value: d });
+  }
+  paintStudioLockDesc();
+}
+function studioLock() {
+  const layer = studioVal("studio-lock") || "onsite";
+  const lock = { layer: layer };
+  if (layer === "dwell") lock.dwell_sec = Math.max(1, Number(studioVal("studio-dwell")) || 3) * 60;
+  if (layer === "revisit") lock.visits = Math.max(2, Number(studioVal("studio-visits")) || 2);
+  if (layer === "capsule") lock.unlock_at = studioVal("studio-unlock");
+  if (layer === "condition") {
+    const w = studioVal("studio-when");
+    lock.when = w === "golden" ? { golden: true } : w === "night" ? { phase: "night" } : w === "group2" ? { min_group: 2 } : { weather: [w || "rain"] };
+  }
+  return lock;
+}
+function paintStudioLockDesc() {
+  const el = document.getElementById("studio-lock-desc");
+  if (el) el.textContent = Access.describe({ lock: studioLock() });
+  const sponsor = document.getElementById("studio-sponsor");
+  const wrap = document.getElementById("studio-sponsor-wrap");
+  if (sponsor && wrap) wrap.hidden = !sponsor.checked;
+}
+function applyStudioTemplate() {
+  const key = studioVal("studio-template");
+  const t = STUDIO_TEMPLATES[key];
+  if (!t) return;
+  document.getElementById("studio-type").value = t.type;
+  document.getElementById("studio-lock").value = t.lock;
+  paintStudioFields();
+  studioStatus(t.note);
 }
 function paintStudioPreview() {
   const here = document.getElementById("preview-here");
@@ -3258,22 +3409,27 @@ function paintStudioPreview() {
   const sel = document.getElementById("studio-space");
   if (!here || !home) return;
   const pin = pinById(sel && sel.value ? sel.value : state.pinId);
-  const space = spaceById[pin.id];
+  const items = Content.itemsFor(pin.id);
   here.replaceChildren();
   const h = document.createElement("h3");
   h.textContent = pin.alias;
   const line = document.createElement("p");
   line.textContent = workOf(pin).afterglow;
   here.append(h, line);
-  ((space && space.feed) || []).slice(0, 3).forEach((item) => {
+  items.slice(0, 6).forEach((item) => {
     const p = document.createElement("p");
-    p.textContent = feedLabel(item);
+    p.textContent = (Feed.TYPE[item.type] || "") + " · " + feedLabel(item);
     here.appendChild(p);
   });
   home.replaceChildren();
   const away = document.createElement("p");
-  away.textContent = "이 자리에서만 재생됩니다";
+  away.textContent = "본편은 이 자리에서만 재생됩니다";
   home.appendChild(away);
+  items.slice(0, 6).forEach((item) => {
+    const p = document.createElement("p");
+    p.textContent = (item.teaser || Feed.TYPE[item.type] || "") + " — " + Access.describe(item);
+    home.appendChild(p);
+  });
   if (!script) return;
   script.replaceChildren();
   pieceOf(pin, "day").B.forEach((row) => {
@@ -3287,8 +3443,7 @@ function paintStudio() {
   if (!sel) return;
   const prev = sel.value || state.pinId;
   const options = [];
-  DATA.pins.forEach((p) => options.push({ id: p.id, label: p.id + "  " + p.alias }));
-  studioPins.forEach((p) => { if (!options.some((o) => o.id === p.id)) options.push({ id: p.id, label: p.id + "  " + p.alias }); });
+  Content.allPins().forEach((p) => options.push({ id: p.id, label: p.id + "  " + p.alias }));
   (catalogSpaces || []).forEach((space) => {
     if (!space || !space.pin_id || options.some((o) => o.id === space.pin_id)) return;
     options.push({ id: space.pin_id, label: space.pin_id + "  " + (space.alias || space.name || "") });
@@ -3305,32 +3460,59 @@ function paintStudio() {
   paintStudioPreview();
   if (!document.getElementById("studio-fields").childElementCount) paintStudioFields();
 }
+function studioLines(text, bearing) {
+  return text.split("\n").map((s) => s.trim()).filter(Boolean).map((s, i) => ({ t: i * 9, text: s, look: bearing }));
+}
+function studioItem(kind, id) {
+  const title = studioVal("studio-title");
+  const bearing = Number(studioVal("studio-bearing")) || 0;
+  if (kind === "story") return { type: "docent", title: title || "잔향 30초", body: { audio_url: studioVal("studio-audio"), duration_sec: 30 } };
+  if (kind === "music") {
+    const audioUrl = studioVal("studio-audio");
+    return { type: "music", title: title, body: { artist: studioVal("studio-artist"), note: studioVal("studio-note"), url: studioVal("studio-url"), audio_url: audioUrl, exclusive: !!audioUrl } };
+  }
+  if (kind === "soundscape") return { type: "soundscape", title: title, body: { text: studioVal("studio-text"), duration_sec: Number(studioVal("studio-duration")) || 45, bearing: bearing, filter: FILTER[studioVal("studio-space")] || ["lowpass", 800, 0.7] } };
+  if (kind === "docent") {
+    const body = { lines: { ko: studioLines(studioVal("studio-ko"), bearing) } };
+    const en = studioLines(studioVal("studio-en"), bearing);
+    if (en.length) body.lines.en = en;
+    return { type: "docent", title: title, body: body };
+  }
+  if (kind === "video") return { type: "video", title: title, body: { src: studioVal("studio-src"), text: studioVal("studio-text"), bearing: bearing, then_label: "그때", now_label: "지금" } };
+  if (kind === "game") {
+    const game = studioVal("studio-game") || "hunt";
+    const body = { game: game };
+    if (game === "hunt") Object.assign(body, { target: { north: Number(studioVal("studio-north")) || 0, east: Number(studioVal("studio-east")) || 0 }, found_m: 7, freq: 110, reward: "찾았다." });
+    if (game === "disco") Object.assign(body, { duration_sec: 240, bpm: 92, epoch: Math.floor(Date.now() / 1000) });
+    if (game === "tag") Object.assign(body, { survive_sec: 90, start_m: 45, speed: 1.3, caught_m: 5 });
+    return { type: "game", title: title, body: body };
+  }
+  if (kind === "capsule") return { type: "capsule", title: title, body: { text: studioVal("studio-text"), from: "스튜디오 · " + fmtDay(new Date().toISOString()) } };
+  return { type: "note", creator: studioVal("studio-author") || "잔향 에디터", body: { text: studioVal("studio-text") } };
+}
 function addStudioFeed(e) {
   e.preventDefault();
   const sel = document.getElementById("studio-space");
   const type = document.getElementById("studio-type");
   if (!sel || !type || !sel.value) return;
   const pinId = sel.value;
-  const id = "c" + Date.now();
-  let item = null;
-  if (type.value === "story") {
-    item = { id: id, type: "story", title: document.getElementById("studio-title").value.trim() || "잔향 30초", audio_url: document.getElementById("studio-audio").value.trim(), duration_sec: 30 };
-  } else if (type.value === "music") {
-    item = {
-      id: id,
-      type: "track_link",
-      title: document.getElementById("studio-title").value.trim(),
-      artist: document.getElementById("studio-artist").value.trim(),
-      note: document.getElementById("studio-note").value.trim(),
-      platform: "youtube",
-      url: document.getElementById("studio-url").value.trim(),
-      curator: "스튜디오"
-    };
-  } else {
-    item = { id: id, type: "field_note", author: document.getElementById("studio-author").value.trim() || "잔향 에디터", text: document.getElementById("studio-text").value.trim() };
+  const item = Object.assign({
+    id: "c" + Date.now(),
+    creator: "스튜디오",
+    tier: studioVal("studio-tier") || "creator",
+    teaser: studioVal("studio-teaser"),
+    lock: studioLock()
+  }, studioItem(type.value, pinId));
+  const body = item.body || {};
+  if (item.type === "note" && !body.text) { studioStatus("내용을 입력하세요."); return; }
+  if (item.type === "capsule" && (!body.text || !item.lock.unlock_at)) { studioStatus("내용과 열리는 날을 입력하세요."); return; }
+  if (item.type !== "note" && !item.title) { studioStatus("제목을 입력하세요."); return; }
+  if (item.type === "docent" && !body.audio_url && !(body.lines && body.lines.ko.length)) { studioStatus("원고를 한 문장 이상 입력하세요."); return; }
+  if (document.getElementById("studio-sponsor").checked) {
+    const name = studioVal("studio-sponsor-name");
+    if (!name) { studioStatus("스폰서 콘텐츠는 스폰서 이름을 밝혀야 등록돼요."); return; }
+    item.sponsor = { name: name, disclosed: true };
   }
-  if (item.type === "field_note" && !item.text) { studioStatus("내용을 입력하세요."); return; }
-  if (item.type === "track_link" && !item.title) { studioStatus("내용을 입력하세요."); return; }
   studioStatus("등록 중");
   const known = (catalogSpaces || []).some((space) => space.pin_id === pinId);
   const ensure = known ? Promise.resolve() : commitSpaces((list) => {
@@ -3348,7 +3530,7 @@ function addStudioFeed(e) {
       return Object.assign({}, space, { feed: (space.feed || []).concat([item]) });
     });
   })).then(() => {
-    studioStatus("등록됨");
+    studioStatus("등록됨 · " + Access.describe(item));
     paintStudioFields();
   }).catch((err) => studioStatus(err && err.message ? err.message : "등록 실패"));
 }
@@ -3360,138 +3542,26 @@ function fillWhisper(pinId) {
   form.dataset.pin = pinId;
   input.value = readNote(pinId);
 }
-function feedBadge(label) {
-  const badge = document.createElement("p");
-  badge.className = "badge";
-  badge.textContent = label;
-  return badge;
-}
-function paintFeedItem(item) {
-  if (!item) return null;
-  const type = item.type === "note" ? "field_note" : item.type === "music" ? "track_link" : item.type;
-  if (type === "story") {
-    const card = document.createElement("article");
-    card.className = "feed-note";
-    const title = document.createElement("h3");
-    title.textContent = item.title || "잔향";
-    const audio = document.createElement("audio");
-    audio.controls = true;
-    audio.preload = "none";
-    if (item.audio_url) audio.src = item.audio_url;
-    card.append(feedBadge("Story"), title, audio);
-    return card;
-  }
-  if (type === "field_note") {
-    const note = document.createElement("article");
-    note.className = "feed-note";
-    const who = document.createElement("p");
-    who.className = "feed-kicker";
-    who.textContent = item.author || "현장 노트";
-    const text = document.createElement("p");
-    text.textContent = item.text || "";
-    note.append(feedBadge("Note"), who, text);
-    return note;
-  }
-  const card = document.createElement("article");
-  card.className = "feed-track";
-  const row = document.createElement("div");
-  row.className = "track-row";
-  const copy = document.createElement("div");
-  const title = document.createElement("h3");
-  title.textContent = item.title || "이름 없는 트랙";
-  const who = document.createElement("p");
-  who.className = "who";
-  who.textContent = item.artist || "";
-  copy.append(title, who);
-  row.append(copy);
-  card.append(feedBadge("Music"), row);
-  if (item.note) {
-    const note = document.createElement("p");
-    note.className = "note";
-    note.textContent = item.note;
-    card.appendChild(note);
-  }
-  return card;
-}
+// 공간 피드는 Feed(platform/feed.js)가 그린다. 카탈로그의 첫 노트는 지금처럼 본편 아래 문장으로 쓴다.
 function paintSetlist() {
-  const root = document.getElementById("setlist");
-  const rest = document.getElementById("feed-rest");
-  if (!root || !rest) return;
+  const root = document.getElementById("pfeed");
+  if (!root) return;
   const pin = currentPin();
   if (!spaceById[pin.id]) ensureSpace(pin.id);
   const show = inside(pin);
-  root.hidden = !show;
   fillWhisper(pin.id);
-  if (!show) {
-    const place = document.getElementById("place");
-    const dek = document.getElementById("dek");
-    if (place) place.hidden = true;
-    if (dek) dek.textContent = "";
-    return;
-  }
-  if (!spaceById[pin.id]) {
-    ensureSpace(pin.id);
-    if (rest.dataset.sig !== pin.id + "|wait") {
-      rest.dataset.sig = pin.id + "|wait";
-      rest.replaceChildren();
-      const wait = document.createElement("p");
-      wait.className = "feed-wait";
-      wait.textContent = "피드를 불러오는 중";
-      rest.appendChild(wait);
-    }
-    return;
-  }
-  const space = spaceById[pin.id];
-  const feed = (space.feed || []).slice(0, 8);
-  const lead = feed.find((item) => item.type === "field_note" || item.type === "note");
-  const items = feed.filter((item) => item !== lead);
-  const sig = pin.id + "|" + (space.alias || "") + "|" + (lead ? lead.id : "") + "|" + items.map((item) => item.id).join(",");
+  const items = Content.itemsFor(pin.id);
+  const lead = show ? items.find((it) => it.legacy && it.type === "note") : null;
   const place = document.getElementById("place");
   const dek = document.getElementById("dek");
+  const space = spaceById[pin.id];
   if (place) {
-    const alias = space.alias && space.alias !== pin.alias ? space.alias : "";
+    const alias = show && space && space.alias && space.alias !== pin.alias ? space.alias : "";
     place.textContent = alias;
     place.hidden = !alias;
   }
-  if (dek) dek.textContent = lead && lead.text ? lead.text : "";
-  if (rest.dataset.sig === sig) return;
-  rest.dataset.sig = sig;
-  rest.replaceChildren();
-  items.forEach((item) => {
-    const node = paintFeedItem(item);
-    if (node) rest.appendChild(node);
-  });
-}
-function onSetlistClick(e) {
-  const btn = e.target.closest("button");
-  if (!btn || !btn.dataset.set) return;
-  const pin = currentPin();
-  if (!inside(pin)) return;
-  if (btn.dataset.set === "bed") {
-    const bed = document.getElementById("bed-audio");
-    if (!bed) return;
-    if (shelf.bedOn) releaseBed();
-    else {
-      shelf.bedOn = true;
-      shelf.bedFade = 0;
-      bed.volume = state.mode === "main" ? 0.18 : 0.62;
-      const started = bed.play();
-      if (started && started.catch) started.catch(() => {});
-    }
-  } else {
-    const video = document.getElementById("reel");
-    if (!video) return;
-    if ((state.mode === "main" || state.mode === "fading") && !video.paused) {
-      userStop();
-      return;
-    }
-    playMain();
-    if (state.mode !== "main") return;
-    try { video.currentTime = 0; video.volume = 1; } catch (err) {}
-    const started = video.play();
-    if (started && started.catch) started.catch(() => {});
-  }
-  render();
+  if (dek) dek.textContent = lead ? lead.body.text : "";
+  Feed.paint(pin, items.filter((it) => it !== lead));
 }
 function fmtDay(iso) {
   if (!iso) return "방문함";
@@ -3502,11 +3572,13 @@ function fmtDay(iso) {
 function showTab(tab) {
   const vault = document.getElementById("vault");
   const work = document.getElementById("work");
+  const discover = document.getElementById("discover");
   const dock = document.getElementById("dock");
   if (!vault) return;
-  activeTab = tab === "keeps" || tab === "work" ? tab : "map";
+  activeTab = ["keeps", "work", "discover"].indexOf(tab) !== -1 ? tab : "map";
   vault.hidden = activeTab !== "keeps";
   if (work) work.hidden = activeTab !== "work";
+  if (discover) discover.hidden = activeTab !== "discover";
   if (dock) dock.hidden = activeTab !== "map";
   document.querySelectorAll("#tabs button").forEach((b) => {
     b.setAttribute("aria-selected", b.dataset.tab === activeTab ? "true" : "false");
@@ -3515,79 +3587,33 @@ function showTab(tab) {
     vaultStamp = "";
     paintVault();
   }
+  if (activeTab === "discover") {
+    Discover.stamp = "";
+    Discover.paint();
+  }
   if (activeTab === "work") showWork(workPane);
   if (activeTab === "map") {
-    const rest = document.getElementById("feed-rest");
-    if (rest) rest.dataset.sig = "";
+    Feed.stamp = "";
     paintSetlist();
   }
 }
 function showWork(pane) {
-  workPane = pane === "studio" ? "studio" : "rehearsal";
-  const rehearsal = document.getElementById("rehearsal");
-  const studio = document.getElementById("studio");
-  if (rehearsal) rehearsal.hidden = workPane !== "rehearsal";
-  if (studio) studio.hidden = workPane !== "studio";
-  const a = document.getElementById("work-rehearsal");
-  const b = document.getElementById("work-studio");
-  if (a) a.setAttribute("aria-selected", workPane === "rehearsal" ? "true" : "false");
-  if (b) b.setAttribute("aria-selected", workPane === "studio" ? "true" : "false");
-  if (workPane === "studio") paintStudio();
-}
-function paintVaultCard(pin, keep, playing) {
-  const on = playing === pin.id;
-  const card = document.createElement("article");
-  card.className = on ? "keep playing" : "keep";
-  const copy = document.createElement("div");
-  const h = document.createElement("h2");
-  h.textContent = workOf(pin).afterglow;
-  const when = document.createElement("p");
-  when.textContent = fmtDay(keep && keep.at);
-  copy.append(h, when);
-  if (readNote(pin.id)) {
-    const memo = document.createElement("p");
-    memo.textContent = "한 줄 남김";
-    copy.appendChild(memo);
-  }
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.dataset.echo = pin.id;
-  btn.textContent = on ? "정지" : "30초";
-  btn.setAttribute("aria-pressed", on ? "true" : "false");
-  card.append(copy, btn);
-  return card;
-}
-function paintVault() {
-  const vault = document.getElementById("vault");
-  if (!vault || vault.hidden) return;
-  const count = document.getElementById("vault-count");
-  const list = document.getElementById("vault-list");
-  if (!count || !list) return;
-  const byId = {};
-  (state.keeps || []).forEach((k) => { if (!byId[k.pinId]) byId[k.pinId] = k; });
-  const playing = state.mode === "echo" ? state.pinId : "";
-  const real = [];
-  const rehearsal = [];
-  state.visited.forEach((id) => {
-    const pin = DATA.pins.find((p) => p.id === id);
-    if (!pin) return;
-    const keep = byId[id];
-    if (keep && keep.rehearsal) rehearsal.push(pin);
-    else real.push(pin);
+  workPane = ["studio", "metrics", "native"].indexOf(pane) !== -1 ? pane : "rehearsal";
+  ["rehearsal", "studio", "metrics", "native"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = workPane !== id;
+    const tab = document.getElementById("work-" + id);
+    if (tab) tab.setAttribute("aria-selected", workPane === id ? "true" : "false");
   });
-  const sig = real.map((p) => p.id).join(",") + "|" + rehearsal.map((p) => p.id).join(",") + "|" + playing;
-  if (sig === vaultStamp && list.childElementCount) return;
-  vaultStamp = sig;
-  list.replaceChildren();
-  count.textContent = real.length || rehearsal.length ? "" : "아직 없어요";
-  real.forEach((p) => list.appendChild(paintVaultCard(p, byId[p.id], playing)));
-  if (rehearsal.length) {
-    const label = document.createElement("p");
-    label.className = "keep-label";
-    label.textContent = "리허설";
-    list.appendChild(label);
-    rehearsal.forEach((p) => list.appendChild(paintVaultCard(p, byId[p.id], playing)));
-  }
+  if (workPane === "studio") paintStudio();
+  if (workPane === "metrics") Metrics.paint();
+  if (workPane === "native") { Native.paintAt = 0; Native.paint(); }
+}
+// 서랍은 Archive(platform/archive.js)가 그린다.
+function paintVault() {
+  if (!vaultStamp) Archive.stamp = "";
+  vaultStamp = "archive";
+  Archive.paint();
 }
 function clockPhase() {
   const now = new Date();
@@ -3612,34 +3638,23 @@ function approachWord(pin) {
   return dirs[i];
 }
 function render() {
-  const night = document.body.classList.contains("night");
-  const theme = document.querySelector('meta[name="theme-color"]');
-  if (theme) theme.setAttribute("content", night ? "#0B0F14" : "#F4F7FB");
   const pin = currentPin();
+  Sky.apply(pin);
   const spec = actionSpec(pin);
   const band = bandOf(pin);
   const insideNow = inside(pin);
-  if (state.wasInside === false && insideNow) {
-    try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
-  }
   state.wasInside = insideNow;
   const aliasEl = document.getElementById("alias");
-  aliasEl.textContent = shownAlias(pin);
-  aliasEl.hidden = !insideNow;
+  aliasEl.textContent = insideNow || !Discover.fogged(pin) ? pin.alias : "";
+  aliasEl.hidden = !aliasEl.textContent;
   const metaEl = document.getElementById("meta");
   metaEl.hidden = true;
   metaEl.textContent = "";
   const loc = document.getElementById("loc-line");
   const distEl = document.getElementById("dist");
-  if (insideNow) {
-    loc.textContent = "";
-    loc.hidden = true;
-    distEl.textContent = "";
-  } else {
-    loc.hidden = false;
-    loc.textContent = approachWord(pin);
-    distEl.textContent = band === "far" ? "여기서만 열려요" : "";
-  }
+  // 방향과 거리는 나침반(Stage.paintCompass)이 맡는다.
+  loc.hidden = true;
+  distEl.textContent = "";
   const playing = state.mode === "main" || state.mode === "fading" || state.mode === "echo" || state.mode === "aggro";
   const cap = workOf(pin).kind === "audio" ? captionFor(pin) : "";
   document.getElementById("live").textContent = playing ? cap : "";
@@ -3690,7 +3705,7 @@ function render() {
   const now = document.getElementById("now");
   if (now) now.hidden = true;
   const flag = document.getElementById("rehearsal-flag");
-  if (flag) flag.hidden = !state.rehearsalArmed;
+  if (flag) flag.hidden = !state.rehearsalArmed || !document.documentElement.classList.contains("creator");
   paintVault();
   paintSetlist();
   if (!insideNow) {
@@ -3700,19 +3715,20 @@ function render() {
   const whisper = document.getElementById("whisper");
   if (whisper) whisper.hidden = !insideNow;
   syncSetMedia();
+  Platform.render(pin, insideNow);
   const chips = document.getElementById("chips");
   if (chips && chips.childElementCount) chips.replaceChildren();
   const dock = document.getElementById("dock");
   if (dock && activeTab === "map") dock.hidden = false;
   if (dock) {
-    dock.classList.toggle("open", !!state.sheetOpen || band === "in");
     dock.classList.toggle("near", insideNow);
     dock.classList.toggle("playing", playing);
-    dock.classList.remove("band-far", "band-edge", "band-in");
-    dock.classList.add("band-" + band);
+    if (!dock.classList.contains("band-" + band)) {
+      dock.classList.remove("band-far", "band-edge", "band-in");
+      dock.classList.add("band-" + band);
+    }
   }
-  const grip = document.getElementById("grip");
-  if (grip) grip.setAttribute("aria-expanded", state.sheetOpen ? "true" : "false");
+  Stage.update(pin, insideNow, band);
 }
 
 function mercX(lng) { return (lng + 180) / 360; }
@@ -3726,6 +3742,13 @@ const VIEW = {
   y0: mercY(BOUNDS.maxLat),
   y1: mercY(BOUNDS.minLat)
 };
+function setView(bounds) {
+  if (!bounds) return;
+  VIEW.x0 = mercX(bounds.minLng);
+  VIEW.x1 = mercX(bounds.maxLng);
+  VIEW.y0 = mercY(bounds.maxLat);
+  VIEW.y1 = mercY(bounds.minLat);
+}
 function project(lat, lng) {
   const x = (mercX(lng) - VIEW.x0) / (VIEW.x1 - VIEW.x0) * view.w;
   const y = (mercY(lat) - VIEW.y0) / (VIEW.y1 - VIEW.y0) * view.h;
@@ -3739,7 +3762,14 @@ function unproject(px, py) {
   return { lat: lat, lng: lng };
 }
 const nmap = { map: null, rings: [], markers: [], stamp: "", focus: "", w: 0, h: 0, wait: 0 };
-function pinIcon(on) {
+function pinIcon(on, fog) {
+  if (fog) {
+    const s = on ? 46 : 34;
+    return {
+      content: '<div style="width:' + s + 'px;height:' + s + 'px;margin-left:-' + (s / 2) + 'px;margin-top:-' + (s / 2) + 'px;border-radius:50%;background:rgba(10,132,255,' + (on ? ".22" : ".12") + ');border:1px dashed rgba(10,132,255,.6)"></div>',
+      anchor: new naver.maps.Point(0, 0)
+    };
+  }
   const size = on ? 12 : 8;
   const color = on ? "#141414" : "#b9b9b2";
   return {
@@ -3806,6 +3836,7 @@ function bootNaver() {
     dropDraft(e.coord.lat(), e.coord.lng());
   });
   syncStudioMarkers();
+  syncPlatformMarkers();
   return true;
   } catch (e) {
     nmap.failed = true;
@@ -3859,9 +3890,16 @@ function drawFallback() {
   const g = canvas.getContext("2d");
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   const night = document.body.classList.contains("night");
-  g.fillStyle = night ? "#0e0e0d" : "#e7e7e2";
+  const sky = Sky.now;
+  if (sky) {
+    const grad = g.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, sky.top);
+    grad.addColorStop(1, sky.bottom);
+    g.fillStyle = grad;
+  } else g.fillStyle = night ? "#0e0e0d" : "#e7e7e2";
   g.fillRect(0, 0, w, h);
   drawSketch(g, w, h, night, state.tilesOn);
+  Discover.drawMist(g, w, h, night);
   drawPins(g, night);
 }
 function drawNaver() {
@@ -3885,7 +3923,7 @@ function drawNaver() {
   const pin = currentPin();
   const here = listenerPos() || simPos(pin);
   if (!here) return;
-  const key = here.lat.toFixed(5) + "," + here.lng.toFixed(5) + "|" + pin.id + "|" + pin.radius;
+  const key = here.lat.toFixed(5) + "," + here.lng.toFixed(5) + "|" + pin.id + "|" + pin.radius + "|" + state.region + "|" + state.channel + "|" + state.visited.length;
   if (key !== nmap.stamp) {
     nmap.stamp = key;
     const ll = new naver.maps.LatLng(here.lat, here.lng);
@@ -3896,12 +3934,18 @@ function drawNaver() {
     if (nmap.rings[1]) nmap.rings[1].setCenter(ll);
     nmap.markers.forEach((item) => {
       const on = item.id === pin.id;
-      item.marker.setIcon(pinIcon(on));
+      const p = pinById(item.id);
+      const fog = Discover.fogged(p);
+      const at = fog ? Discover.fogCenter(p) : p;
+      item.marker.setPosition(new naver.maps.LatLng(at.lat, at.lng));
+      item.marker.setIcon(pinIcon(on, fog));
       item.marker.setZIndex(on ? 80 : 10);
+      item.marker.setVisible(Content.regionOf(p) === state.region && (!p.drop || Discover.dropState(p).open));
     });
     if (nmap.focus !== pin.id) {
       nmap.focus = pin.id;
-      nmap.map.panTo(new naver.maps.LatLng(pin.lat, pin.lng));
+      const at = Discover.fogged(pin) ? Discover.fogCenter(pin) : pin;
+      nmap.map.panTo(new naver.maps.LatLng(at.lat, at.lng));
     }
   }
   placeMe(here.lat, here.lng);
@@ -3914,6 +3958,10 @@ function tileNW(x, y, z) {
   };
 }
 function drawSketch(g, w, h, night, tiled) {
+  if (state.region !== "seongsu" && Content.region(state.region)) {
+    Discover.drawRegionSketch(g, Content.region(state.region), w, h, night);
+    return;
+  }
   const ink = night ? "rgba(244, 244, 241, .72)" : "rgba(20, 20, 20, .55)";
   const wash = night ? "rgba(244, 244, 241, .05)" : "rgba(20, 20, 20, .04)";
   g.fillStyle = wash;
@@ -3954,16 +4002,36 @@ function strokeRoad(g, pts) {
   });
   g.stroke();
 }
+function mapPins() {
+  return Content.ready ? Content.pinsIn(state.region) : DATA.pins;
+}
+function radiusPx(lat, lng, meters) {
+  const center = project(lat, lng);
+  const edge = project(lat + meters / M_PER_DEG, lng);
+  return Math.abs(edge[1] - center[1]);
+}
+// 로컬 탐색: 가 보지 않은 자리는 정확한 점 대신 어긋난 단서 원으로 그린다.
 function drawPins(g, night) {
   const pin = currentPin();
-  const center = project(pin.lat, pin.lng);
-  const edge = project(pin.lat + pin.radius / M_PER_DEG, pin.lng);
-  const radiusPx = Math.abs(edge[1] - center[1]);
+  const ink = night ? "#f4f4f1" : "#141414";
+  const accent = { a: (x) => Sky.accentRgba(x) };
+  const pinFog = Discover.fogged(pin);
+  const focus = pinFog ? Discover.fogCenter(pin) : pin;
+  const center = project(focus.lat, focus.lng);
   g.beginPath();
-  g.strokeStyle = night ? "rgba(244,244,241,.55)" : "rgba(20,20,20,.4)";
+  if (pinFog) {
+    g.setLineDash([4, 4]);
+    g.strokeStyle = accent.a(0.8);
+    g.fillStyle = accent.a(0.1);
+    g.arc(center[0], center[1], Math.max(14, radiusPx(focus.lat, focus.lng, Discover.fogRadius(pin))), 0, Math.PI * 2);
+    g.fill();
+  } else {
+    g.strokeStyle = night ? "rgba(244,244,241,.55)" : "rgba(20,20,20,.4)";
+    g.arc(center[0], center[1], Math.max(8, radiusPx(pin.lat, pin.lng, pin.radius)), 0, Math.PI * 2);
+  }
   g.lineWidth = 1.5;
-  g.arc(center[0], center[1], Math.max(8, radiusPx), 0, Math.PI * 2);
   g.stroke();
+  g.setLineDash([]);
   const here = listenerPos() || simPos(pin);
   const me = project(here.lat, here.lng);
   g.strokeStyle = night ? "rgba(244,244,241,.28)" : "rgba(20,20,20,.22)";
@@ -3973,16 +4041,56 @@ function drawPins(g, night) {
   g.lineTo(me[0], me[1]);
   g.stroke();
   g.setLineDash([]);
-  DATA.pins.forEach((p) => {
-    const q = project(p.lat, p.lng);
+  const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 400);
+  g.font = "11px ui-sans-serif, sans-serif";
+  mapPins().forEach((p) => {
     const on = p.id === pin.id;
+    const closed = !!Safety.blockReason(p);
+    if (Discover.fogged(p)) {
+      if (on) return;
+      const c = Discover.fogCenter(p);
+      const q = project(c.lat, c.lng);
+      const r = Math.max(8, radiusPx(c.lat, c.lng, Discover.fogRadius(p)));
+      // 가장자리가 흐린 안개 질감. 닫힌 자리는 더 옅게.
+      const soft = g.createRadialGradient(q[0], q[1], 0, q[0], q[1], r);
+      soft.addColorStop(0, accent.a(closed ? 0.06 : 0.18));
+      soft.addColorStop(1, accent.a(0));
+      g.beginPath();
+      g.fillStyle = soft;
+      g.arc(q[0], q[1], r, 0, Math.PI * 2);
+      g.fill();
+      if (closed) {
+        g.fillStyle = night ? "rgba(244,244,241,.45)" : "rgba(20,20,20,.35)";
+        g.fillText("☾", q[0] - 4, q[1] + 4);
+      } else if (p.drop) {
+        g.fillStyle = accent.a(0.5 + 0.4 * pulse);
+        g.fillText("드롭", q[0] - 10, q[1] + 4);
+      }
+      return;
+    }
+    const q = project(p.lat, p.lng);
+    if (closed) {
+      g.fillStyle = night ? "rgba(244,244,241,.45)" : "rgba(20,20,20,.35)";
+      g.fillText("☾", q[0] - 4, q[1] + 4);
+      return;
+    }
     g.beginPath();
-    g.fillStyle = on ? (night ? "#f4f4f1" : "#141414") : (night ? "rgba(244,244,241,.4)" : "rgba(20,20,20,.28)");
+    g.fillStyle = on ? ink : (night ? "rgba(244,244,241,.4)" : "rgba(20,20,20,.28)");
     g.arc(q[0], q[1], on ? 7 : 4.5, 0, Math.PI * 2);
     g.fill();
+    if (p.drop) {
+      g.beginPath();
+      g.strokeStyle = accent.a((0.4 + 0.5 * pulse).toFixed(2));
+      g.arc(q[0], q[1], 10 + 4 * pulse, 0, Math.PI * 2);
+      g.stroke();
+    }
+    if (state.channel === "tour" && !on) {
+      g.fillStyle = night ? "rgba(244,244,241,.7)" : "rgba(20,20,20,.6)";
+      g.fillText(p.alias, q[0] + 8, q[1] - 8);
+    }
   });
   g.beginPath();
-  g.fillStyle = night ? "#f4f4f1" : "#141414";
+  g.fillStyle = ink;
   g.arc(me[0], me[1], 6, 0, Math.PI * 2);
   g.fill();
   g.lineWidth = 2;
@@ -3990,9 +4098,18 @@ function drawPins(g, night) {
   g.beginPath();
   g.arc(me[0], me[1], 12, 0, Math.PI * 2);
   g.stroke();
-  g.fillStyle = night ? "#f4f4f1" : "#141414";
+  const heading = Context.headingNow();
+  if (heading != null) {
+    const r = heading * Math.PI / 180;
+    g.beginPath();
+    g.moveTo(me[0], me[1]);
+    g.lineTo(me[0] + Math.sin(r) * 22, me[1] - Math.cos(r) * 22);
+    g.strokeStyle = accent.a(0.9);
+    g.stroke();
+  }
+  g.fillStyle = ink;
   g.font = "12px ui-sans-serif, sans-serif";
-  const pinName = shownAlias(pin);
+  const pinName = inside(pin) || !pinFog ? pin.alias : "";
   if (pinName) g.fillText(pinName, center[0] + 16, center[1] - 20);
   if (state.useGps) g.fillText(state.gpsFix ? "GPS" : "대기", me[0] + 12, me[1] + 16);
 }
@@ -4054,8 +4171,9 @@ function scheduleTiles() {
 function hitPin(px, py) {
   let best = null;
   let bestD = 24;
-  DATA.pins.forEach((p) => {
-    const q = project(p.lat, p.lng);
+  mapPins().forEach((p) => {
+    const at = Discover.fogged(p) ? Discover.fogCenter(p) : p;
+    const q = project(at.lat, at.lng);
     const d = Math.hypot(q[0] - px, q[1] - py);
     if (d < bestD) { bestD = d; best = p; }
   });
@@ -4110,6 +4228,7 @@ function restore(raw) {
 }
 function runSelfTest() {
   const snap = snapshot();
+  const platformSnap = PlatformTest.snapshot();
   const fails = [];
   quietStop();
   function check(cond, msg) { if (!cond) fails.push(msg); }
@@ -4236,9 +4355,11 @@ function runSelfTest() {
     gpsBox.checked = false;
     gpsBox.dispatchEvent(new Event("change"));
     check(LocationSource.kind === "simulator" && state.useGps === false, "gps off returns sim");
+    PlatformTest.run(check);
   } catch (e) {
     fails.push(e && e.message ? e.message : "throw");
   } finally {
+    PlatformTest.restore(platformSnap);
     restore(snap);
     render();
     drawMap();
@@ -4262,7 +4383,10 @@ function tick(ts) {
     if (!lastTs) lastTs = ts;
     const real = Math.min(0.25, (ts - lastTs) / 1000);
     lastTs = ts;
-    if (!state.layoutOnly) Player.tick(real * (state.rate || 1));
+    if (!state.layoutOnly) {
+      Player.tick(real * (state.rate || 1));
+      Platform.tick(real, real * (state.rate || 1));
+    }
     if (!state.phaseHeld && state.mode === "idle") {
       const next = clockPhase();
       if (next !== state.phase) setPhase(next);
@@ -4364,11 +4488,7 @@ function bind() {
     else quietStop();
     render();
   });
-  document.getElementById("grip").addEventListener("click", () => {
-    state.sheetOpen = !state.sheetOpen;
-    stamp = "";
-    render();
-  });
+  Stage.bindGrip();
   const scriptBtn = document.getElementById("script-toggle");
   if (scriptBtn) scriptBtn.addEventListener("click", () => {
     scriptOpen = !scriptOpen;
@@ -4420,7 +4540,10 @@ function bind() {
     const root = document.documentElement;
     if (!root.classList.contains("standalone") || !root.classList.contains("dev-collapsed")) return;
     devTaps += 1;
-    if (devTaps >= 7) root.classList.remove("dev-collapsed");
+    if (devTaps >= 7) {
+      root.classList.remove("dev-collapsed");
+      Platform.setCreator(true);
+    }
   });
   const tabs = document.getElementById("tabs");
   if (tabs) {
@@ -4442,8 +4565,6 @@ function bind() {
       render();
     });
   }
-  const setlist = document.getElementById("setlist");
-  if (setlist) setlist.addEventListener("click", onSetlistClick);
   const whisper = document.getElementById("whisper");
   if (whisper) whisper.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -4459,6 +4580,11 @@ function bind() {
   if (studioAdd) studioAdd.addEventListener("submit", addStudioFeed);
   const studioType = document.getElementById("studio-type");
   if (studioType) studioType.addEventListener("change", paintStudioFields);
+  const studioTemplate = document.getElementById("studio-template");
+  if (studioTemplate) studioTemplate.addEventListener("change", applyStudioTemplate);
+  const studioLockSel = document.getElementById("studio-lock");
+  if (studioLockSel) studioLockSel.addEventListener("change", paintStudioLock);
+  if (studioAdd) studioAdd.addEventListener("change", paintStudioLockDesc);
   const studioSpace = document.getElementById("studio-space");
   if (studioSpace) studioSpace.addEventListener("change", () => { paintStudioFeed(); paintStudioPreview(); });
   const radius = document.getElementById("studio-radius");
@@ -4491,11 +4617,13 @@ function bind() {
   });
   const obs = new ResizeObserver(() => drawMap());
   obs.observe(document.querySelector("main"));
+  Platform.bind();
 }
 
 function init() {
   patchGeo();
   load();
+  Platform.init();
   state.pinId = "SS-01";
   state.phaseHeld = false;
   state.phase = clockPhase();
@@ -4515,7 +4643,7 @@ function init() {
   drawMap();
   if (state.runTestOnBoot) runSelfTest();
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
-    navigator.serviceWorker.register("/janhyang/sw.js?v=2").catch(() => {});
+    navigator.serviceWorker.register("/janhyang/sw.js?v=4").catch(() => {});
   }
   requestAnimationFrame(tick);
 }
